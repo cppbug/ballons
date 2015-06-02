@@ -1,4 +1,4 @@
-#include "AppDelegate.h"
+﻿#include "AppDelegate.h"
 #include "GameScene.h"
 
 USING_NS_CC;
@@ -31,8 +31,19 @@ bool AppDelegate::applicationDidFinishLaunching() {
         director->setOpenGLView(glview);
     }
 
+	Size degResolution(960, 640);
+
+// Cái này thu nhỏ và cố định màn hình lại cho dễ quay phim thôi
+#ifdef WIN32
+	glview->setFrameSize(degResolution.width / 2, degResolution.height / 2);
+	RECT viewPort;
+	GetWindowRect(GetActiveWindow(), &viewPort);
+	SetWindowPos(GetActiveWindow(), HWND_NOTOPMOST, 100, 100,
+		(viewPort.right - viewPort.left), (viewPort.bottom - viewPort.top), SWP_SHOWWINDOW);
+#endif
+
 #if (CC_TARGET_PLATFORM == CC_PLATFORM_WIN32)
-	glview->setDesignResolutionSize(960, 640, ResolutionPolicy::NO_BORDER);
+	glview->setDesignResolutionSize(degResolution.width, degResolution.height, ResolutionPolicy::NO_BORDER);
 #endif
 
     // turn on display FPS

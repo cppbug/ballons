@@ -27,75 +27,92 @@ bool GameScene::init()
 		return false;
 	}
 	srand(time(0));
+	
+	// Vẫn giữ background cũ
 	Sprite *sprBackground = Sprite::create("background.jpg");
 	addChild(sprBackground);
 	sprBackground->setAnchorPoint(Point::ZERO);
 
-	//Tạo 10 cái bong bóng
-	for (int i = 0; i < 10; i++) {
-		//Chỉ là để vẽ đủ các hình
-		int imgIndex = i % 3;
-		//Khởi tạo đối tượng bong bóng
-		Sprite *balloon = nullptr;
-		//Random vị trí của bong bóng trong khoảng Size(900, 600)
-		Point pos = Point(rand() % 900, rand()%600);
-		switch (imgIndex){
-		case 0: {
-					balloon = Sprite::create("balloon_blue.png");
-					balloon->setTag(BLUE_BALLOON);
-					break;
-		}
-		case 1: {
-					balloon = Sprite::create("balloon_red.png");
-					balloon->setTag(RED_BALLOON);
-					break;
-		}
-		case 2: {
-					balloon = Sprite::create("balloon_yellow.png");
-					balloon->setTag(YELLOW_BALLOON);
-					break;
-		}
-		}
-		//Nếu đối tượng balloon khác nullptr thì vẽ lên màn hình
-		if (balloon) {
-			addChild(balloon);
-			balloon->setPosition(pos);
-			m_balloons.pushBack(balloon);
-		}
-	}
+	// Lại xóa đoạn thêm 10 bong bóng
 
-	scheduleUpdate();
+	// Gọi hàm schedule upate
+	this->scheduleUpdate();
+	this->spawnTime = 0;
 	return true;
 }
 
-void GameScene::update(float dt)  {
-	//Lấy kích thước window
-	Size ws = Director::getInstance()->getWinSize();
-	//Duyệt từng đối tượng bong bóng
-	for (auto balloon : m_balloons) {
-		//Nếu bong bóng bay vượt qua khỏi màn hình thì set lại ví trí ban đầu
-		if (balloon->getPositionY() > ws.height + 200) {
-			balloon->setPositionY(-200);
+void GameScene::runBalloonAction(Sprite *balloon)
+{
+	// Đâu tiên, đặt vị trí bong bóng dưới màn hình
+	balloon->setPositionY(-balloon->getContentSize().width);
+
+	// lây kích thước màn hình
+	Size winSize = Director::getInstance()->getWinSize();
+
+	// random tốc độ (từ 100 - 200)
+	float speed = 100 + rand() % 100;
+
+	// random quãng đường, ít nhất là 500
+	float len = 500 + rand() % ((int) winSize.height);
+	float duration = len / speed;
+
+	// tạo action di chuyển
+	MoveBy *moveUpAction = MoveBy::create(duration, Vec2(0, len));
+	// tạo action mờ dần
+	FadeTo *fadeOutAction = FadeTo::create(duration, 0);
+
+	// tạo spawn để kết hợp song song 2 action trên
+	Spawn *moveAndFadeAction = Spawn::create(moveUpAction, fadeOutAction, nullptr);
+
+	// tạo hàm callback sau khi thực hiện xong action
+	CallFunc *callfunc = CallFunc::create([=]
+	{
+		// xóa khỏi game
+		balloon->removeFromParent();
+	});
+
+	// tạo sequence để liên kết 2 action này
+	Sequence *sequence = Sequence::create(moveAndFadeAction, callfunc, nullptr);
+	// thực thi sequence
+	balloon->runAction(sequence);
+}
+
+// Hàm này tạm thời không còn dùng nữa
+// Disable từ Lesson4
+void GameScene::update(float dt)
+{
+	this->spawnTime += dt;
+	if (spawnTime > 0.5)
+	{
+		// spawn logic
+		int _rand = rand() % 3;// tag và tên file sprite của bong bóng
+
+		std::string imgName;
+
+		// đặt giá trị cho tag và tên sprite
+		switch (_rand % 3)
+		{
+		case 0:
+			imgName = "balloon_blue.png";
+			break;
+		case 1:
+			imgName = "balloon_red.png";
+			break;
+		case 2:
+			imgName = "balloon_yellow.png";
+			break;
 		}
-		//Ngược lại, cho bong bóng di chuyển lên với vận tốc đã định nghĩa
-		else {
-			switch (balloon->getTag())
-			{
-					case BLUE_BALLOON: {
-										   balloon->setPositionY(balloon->getPositionY() + VEC_BLUE_BALLOON*dt);
-										   break;
-					}
-					case RED_BALLOON: {
-										   balloon->setPositionY(balloon->getPositionY() + VEC_RED_BALLOON*dt);
-										   break;
-					}
-					case YELLOW_BALLOON:{
-											balloon->setPositionY(balloon->getPositionY() + VEC_YELLOW_BALLOON*dt);
-											break;
-					}
-					default:
-						break;
-			}
-		}
+
+		// tạo bong bóng
+		Sprite *balloon = Sprite::create(imgName);
+		// đặt giá trị position x ngẫu nhiên
+		balloon->setPositionX(rand() % 900);
+		this->addChild(balloon);
+
+		// gọi hàm runBalloonAction cho bong bóng nàu
+		this->runBalloonAction(balloon);
+
+		// reset spawn time
+		spawnTime = 0;
 	}
 }

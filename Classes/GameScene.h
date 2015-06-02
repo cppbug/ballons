@@ -3,17 +3,13 @@
 
 #include "cocos2d.h"
 
-#define VEC_BLUE_BALLOON 100
-#define VEC_RED_BALLOON 150
-#define VEC_YELLOW_BALLOON 200
-
-#define BLUE_BALLOON 1
-#define RED_BALLOON 2
-#define YELLOW_BALLOON 3
-
 class GameScene : public cocos2d::Layer
 {
-	cocos2d::Vector<cocos2d::Sprite*> m_balloons;
+	// khai báo thêm một hàm
+	void runBalloonAction(cocos2d::Sprite *balloon);
+
+	float spawnTime;
+
 public:
     // there's no 'id' in cpp, so we recommend returning the class instance pointer
     static cocos2d::Scene* createScene();
