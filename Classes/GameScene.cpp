@@ -33,6 +33,17 @@ bool GameScene::init()
 	addChild(sprBackground);
 	sprBackground->setAnchorPoint(Point::ZERO);
 
+	//Chỉ xử lý 1 touch tại một thời điểm (sigle-touch)
+	auto listener = EventListenerTouchOneByOne::create();
+
+	//Set callback: báo cho cc2x biết cần trả về cho lớp GameScene khi có sự kiện touch xảy ra.
+	listener->onTouchBegan = CC_CALLBACK_2(GameScene::onTouchBegan, this);
+	listener->onTouchMoved = CC_CALLBACK_2(GameScene::onTouchMoved, this);
+	listener->onTouchEnded = CC_CALLBACK_2(GameScene::onTouchEnded, this);
+
+	//Add cái listener mới tạo vào Dispatcher.
+	_eventDispatcher->addEventListenerWithSceneGraphPriority(listener, this);
+
 	// Lại xóa đoạn thêm 10 bong bóng
 
 	// Gọi hàm schedule upate
@@ -67,6 +78,9 @@ void GameScene::runBalloonAction(Sprite *balloon)
 	// tạo hàm callback sau khi thực hiện xong action
 	CallFunc *callfunc = CallFunc::create([=]
 	{
+		//xóa khỏi vector
+		m_balloons.eraseObject(balloon);
+
 		// xóa khỏi game
 		balloon->removeFromParent();
 	});
@@ -108,6 +122,8 @@ void GameScene::update(float dt)
 		// đặt giá trị position x ngẫu nhiên
 		balloon->setPositionX(rand() % 900);
 		this->addChild(balloon);
+		// bỏ bong bóng vào vector để quản lý
+		m_balloons.pushBack(balloon);
 
 		// gọi hàm runBalloonAction cho bong bóng nàu
 		this->runBalloonAction(balloon);
@@ -115,4 +131,30 @@ void GameScene::update(float dt)
 		// reset spawn time
 		spawnTime = 0;
 	}
+}
+
+bool GameScene::onTouchBegan(cocos2d::Touch* touch, cocos2d::Event* event)
+{
+	Point pos = touch->getLocation();
+	for (auto balloon : m_balloons) {
+		if (balloon->getOpacity() > 0)
+		{
+			if (balloon->getBoundingBox().containsPoint(pos)) {
+				log("Bingo at (%d, %d)", (int)pos.x, (int)pos.y);
+				balloon->stopAllActions();
+				balloon->removeFromParent();
+				balloon->setOpacity(0);
+			}
+		}
+	}
+	return true;
+}
+
+void GameScene::onTouchMoved(cocos2d::Touch* touch, cocos2d::Event* event)
+{
+}
+
+void GameScene::onTouchEnded(cocos2d::Touch* touch, cocos2d::Event* event)
+{
+
 }

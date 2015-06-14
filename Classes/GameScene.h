@@ -5,10 +5,20 @@
 
 class GameScene : public cocos2d::Layer
 {
+	//Sử dụng lại vector để quản lý các balloons.
+	cocos2d::Vector<cocos2d::Sprite *> m_balloons;
+
 	// khai báo thêm một hàm
 	void runBalloonAction(cocos2d::Sprite *balloon);
 
 	float spawnTime;
+
+	//Gọi khi có chạm lên màn hình
+	bool onTouchBegan(cocos2d::Touch* touch, cocos2d::Event* event);
+	//Gọi khi ngón tay (điểm tiếp xúc) di chuyển trong lúc vẫn còn nhấn trên màn hình
+	void onTouchMoved(cocos2d::Touch* touch, cocos2d::Event* event);
+	//Gọi khi ngón tay (điểm tiếp xúc) rời màn hình
+	void onTouchEnded(cocos2d::Touch* touch, cocos2d::Event* event);
 
 public:
     // there's no 'id' in cpp, so we recommend returning the class instance pointer
