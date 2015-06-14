@@ -2,11 +2,23 @@
 #define __GAME_SCENE_H__
 
 #include "cocos2d.h"
+// Include file vừa tạo
+#include "ScoreSystem.h"
 
 class GameScene : public cocos2d::Layer
 {
+	// Khai báo thêm hệ thống tính điểm
+	ScoreSystem scoreSystem;
+
+	// Khai báo label hiển thị điểm
+	cocos2d::Label *lbScore;
+
 	//Sử dụng lại vector để quản lý các balloons.
 	cocos2d::Vector<cocos2d::Sprite *> m_balloons;
+
+	// Khai báo thêm hàm thêm label vào game, sẽ gọi hàm này
+	// trong hàm init, mục tiêu là đỡ dài hàm init thôi
+	void initScoreLabel();
 
 	// khai báo thêm một hàm
 	void runBalloonAction(cocos2d::Sprite *balloon);
@@ -19,8 +31,10 @@ class GameScene : public cocos2d::Layer
 	void onTouchMoved(cocos2d::Touch* touch, cocos2d::Event* event);
 	//Gọi khi ngón tay (điểm tiếp xúc) rời màn hình
 	void onTouchEnded(cocos2d::Touch* touch, cocos2d::Event* event);
-
+	
+	void onScoreChanged(ScoreSystem *scoreSys);
 public:
+
     // there's no 'id' in cpp, so we recommend returning the class instance pointer
     static cocos2d::Scene* createScene();
 

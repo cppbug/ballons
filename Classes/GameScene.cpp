@@ -49,6 +49,14 @@ bool GameScene::init()
 	// Gọi hàm schedule upate
 	this->scheduleUpdate();
 	this->spawnTime = 0;
+
+	// Gán hàm onScoreChanged vào biến OnScoreChanged của scoreSystem
+	scoreSystem.OnScoreChanged = CC_CALLBACK_1(GameScene::onScoreChanged, this);
+	
+	// Xoá đoạn test label vừa thêm
+	// Gọi hàm init score label
+	this->initScoreLabel();
+	
 	return true;
 }
 
@@ -83,6 +91,9 @@ void GameScene::runBalloonAction(Sprite *balloon)
 
 		// xóa khỏi game
 		balloon->removeFromParent();
+
+		// trừ điểm:
+		scoreSystem.decreaseScore(5);
 	});
 
 	// tạo sequence để liên kết 2 action này
@@ -143,7 +154,9 @@ bool GameScene::onTouchBegan(cocos2d::Touch* touch, cocos2d::Event* event)
 				log("Bingo at (%d, %d)", (int)pos.x, (int)pos.y);
 				balloon->stopAllActions();
 				balloon->removeFromParent();
-				balloon->setOpacity(0);
+
+				// cộng thêm điểm nào
+				scoreSystem.increaseScore(10);
 			}
 		}
 	}
@@ -157,4 +170,33 @@ void GameScene::onTouchMoved(cocos2d::Touch* touch, cocos2d::Event* event)
 void GameScene::onTouchEnded(cocos2d::Touch* touch, cocos2d::Event* event)
 {
 
+}
+
+// Viết nội dung cho hàm thêm label
+void GameScene::initScoreLabel()
+{
+	// Kích thước màn hìh
+	Size winSize = getContentSize();
+
+	lbScore = Label::createWithTTF("0", "fonts/Marker Felt.ttf", 30);
+	// canh lại anchor point
+	lbScore->setAnchorPoint(Vec2::ANCHOR_TOP_LEFT);
+	// đặt ở góc trên bên trái
+	lbScore->setPosition(30, winSize.height);
+
+	// thêm vào game
+	addChild(lbScore);
+}
+
+// Khi điểm số thay đổi thì ta cập nhật lại nội dung label
+void GameScene::onScoreChanged(ScoreSystem *scoreSys)
+{
+	// đơn giản là log ra output
+	log("Score: %d", scoreSystem.getScore());
+
+	// cập nhật text trong label
+	// tạo chuỗi từ điểm số
+	std::string sScore = StringUtils::format("%d", scoreSystem.getScore());
+	// hàm set string dùng để thay đổi đoạn text trong label
+	lbScore->setString(sScore);
 }
