@@ -23,7 +23,5 @@ public:
 	// đây là biến lưu trữ một cấu trúc hàm
 	// trong C++, ta dùng nó để lưu trữ hàm
 	// cần gọi thông báo khi điểm số thay đổi
-	// đại loại, các bạn cứ tưởng tượng nó lưu
-	// con trỏ đến một hàm để sau này gọi lại
 	std::function<void(ScoreSystem *)> OnScoreChanged;
 };

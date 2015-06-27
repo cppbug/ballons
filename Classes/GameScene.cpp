@@ -56,6 +56,17 @@ bool GameScene::init()
 	// Xoá đoạn test label vừa thêm
 	// Gọi hàm init score label
 	this->initScoreLabel();
+
+	m_gameTime = GAME_TIME;
+	m_lblTime = Label::createWithTTF("0", "fonts/Marker Felt.ttf", 30);
+	//Canh lbl theo top-right
+	m_lblTime->setAnchorPoint(Point(1, 1));
+	m_lblTime->setPosition(getContentSize());
+	//Set màu đỏ cho dễ nhìn
+	m_lblTime->setColor(Color3B::RED);
+	addChild(m_lblTime);
+
+	this->schedule(CC_SCHEDULE_SELECTOR(GameScene::spawnClock), 30);
 	
 	return true;
 }
@@ -142,6 +153,32 @@ void GameScene::update(float dt)
 		// reset spawn time
 		spawnTime = 0;
 	}
+
+	//Countdown
+	m_gameTime -= dt;
+	//In thời gian lên màn hình, in ra kiểu int(làm tròn đến giây)
+	int minute = m_gameTime / 60;
+	int second = (int)m_gameTime % 60;
+	m_lblTime->setString(StringUtils::format("%d : %d", minute, second));
+	
+	//Dừng game
+	if (m_gameTime <= 0) {
+		//nghỉ chạy update
+		unscheduleUpdate();
+
+		std::string message = "";
+		//Nếu điểm lớn hơn 0 thì thắng, ngược lại thua
+		if (scoreSystem.getScore() > 0) {
+			message = "Win";
+		}
+		else {
+			message = "Failed!";
+		}
+		Label *lblFinish = Label::createWithTTF(message, "fonts/Marker Felt.ttf", 200);
+		lblFinish->setColor(Color3B::ORANGE);
+		addChild(lblFinish);
+		lblFinish->setPosition(getContentSize() / 2.0f);
+	}
 }
 
 bool GameScene::onTouchBegan(cocos2d::Touch* touch, cocos2d::Event* event)
@@ -160,6 +197,21 @@ bool GameScene::onTouchBegan(cocos2d::Touch* touch, cocos2d::Event* event)
 			}
 		}
 	}
+
+	for (auto clock : m_clocks) {
+		if (clock->getOpacity() > 0)
+		{
+			if (clock->getBoundingBox().containsPoint(pos)) {
+				log("Bonus time");
+				clock->stopAllActions();
+				clock->removeFromParent();
+
+				// cộng thêm thời gian chứ :3
+				m_gameTime += BONUS_TIME;
+			}
+		}
+	}
+
 	return true;
 }
 
@@ -199,4 +251,42 @@ void GameScene::onScoreChanged(ScoreSystem *scoreSys)
 	std::string sScore = StringUtils::format("%d", scoreSystem.getScore());
 	// hàm set string dùng để thay đổi đoạn text trong label
 	lbScore->setString(sScore);
+}
+
+void GameScene::spawnClock(float dt) {
+	Sprite *clock = Sprite::create("clock.png");
+	// đặt giá trị position x ngẫu nhiên và đồng hồ dưới màn hình.
+	clock->setPosition(Point(rand() % 900, -100));
+	this->addChild(clock);
+	m_clocks.pushBack(clock);
+
+	//Chúng ta set hành động cho đồng hồ tương tự bong bóng
+	// lây kích thước màn hình
+	Size winSize = Director::getInstance()->getWinSize();
+
+	// random tốc độ (từ 300 - 600)
+	float speed = 300 + rand() % 300;
+
+	// random quãng đường, ít nhất là 500
+	float len = 500 + rand() % ((int)winSize.height);
+	float duration = len / speed;
+	MoveBy *moveUpAction = MoveBy::create(duration, Vec2(0, len));
+	// tạo action mờ dần
+	FadeTo *fadeOutAction = FadeTo::create(duration, 0);
+
+	// tạo spawn để kết hợp song song 2 action trên
+	Spawn *moveAndFadeAction = Spawn::create(moveUpAction, fadeOutAction, nullptr);
+	// tạo hàm callback sau khi thực hiện xong action
+	CallFunc *callfunc = CallFunc::create([=]
+	{
+		//xóa khỏi vector
+		m_clocks.eraseObject(clock);
+		// xóa khỏi game
+		clock->removeFromParent();
+	});
+
+	// tạo sequence để liên kết 2 action này
+	Sequence *sequence = Sequence::create(moveAndFadeAction, callfunc, nullptr);
+	// thực thi sequence
+	clock->runAction(sequence);
 }

@@ -5,6 +5,12 @@
 // Include file vừa tạo
 #include "ScoreSystem.h"
 
+#define GAME_TIME 300
+
+#define SPAWN_TIME_CLOCK 30
+#define BONUS_TIME 5
+
+
 class GameScene : public cocos2d::Layer
 {
 	// Khai báo thêm hệ thống tính điểm
@@ -33,6 +39,14 @@ class GameScene : public cocos2d::Layer
 	void onTouchEnded(cocos2d::Touch* touch, cocos2d::Event* event);
 	
 	void onScoreChanged(ScoreSystem *scoreSys);
+
+	float m_gameTime;
+	cocos2d::Label *m_lblTime;
+
+	//Clock
+	void spawnClock(float dt);
+	//Tạo vector quản lý đồng hồ
+	cocos2d::Vector<cocos2d::Sprite *> m_clocks;
 public:
 
     // there's no 'id' in cpp, so we recommend returning the class instance pointer
