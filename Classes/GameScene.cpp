@@ -1,4 +1,5 @@
 ﻿#include "GameScene.h"
+#include "SimpleAudioEngine.h"
 
 USING_NS_CC;
 
@@ -52,10 +53,13 @@ bool GameScene::init()
 
 	// Gán hàm onScoreChanged vào biến OnScoreChanged của scoreSystem
 	scoreSystem.OnScoreChanged = CC_CALLBACK_1(GameScene::onScoreChanged, this);
-	
+	highestScoreOfLastGame = UserDefault::getInstance()->getIntegerForKey("HighestScore", 0);
+
 	// Xoá đoạn test label vừa thêm
 	// Gọi hàm init score label
-	this->initScoreLabel();
+	this->initScoreLabel();	
+	// gọi onScoreChanged để cập nhật lại label
+	this->onScoreChanged(&scoreSystem);
 
 	m_gameTime = GAME_TIME;
 	m_lblTime = Label::createWithTTF("0", "fonts/Marker Felt.ttf", 30);
@@ -67,7 +71,9 @@ bool GameScene::init()
 	addChild(m_lblTime);
 
 	this->schedule(CC_SCHEDULE_SELECTOR(GameScene::spawnClock), 30);
-	
+
+	CocosDenshion::SimpleAudioEngine::getInstance()->playBackgroundMusic("background.mp3", true);
+
 	return true;
 }
 
@@ -157,27 +163,13 @@ void GameScene::update(float dt)
 	//Countdown
 	m_gameTime -= dt;
 	//In thời gian lên màn hình, in ra kiểu int(làm tròn đến giây)
-	int minute = m_gameTime / 60;
-	int second = (int)m_gameTime % 60;
-	m_lblTime->setString(StringUtils::format("%d : %d", minute, second));
+	int minute = (int) floorf(m_gameTime) / 60;
+	int second = (int) floorf(m_gameTime) % 60;
+	m_lblTime->setString(StringUtils::format("%02d : %02d", minute, second));
 	
 	//Dừng game
 	if (m_gameTime <= 0) {
-		//nghỉ chạy update
-		unscheduleUpdate();
-
-		std::string message = "";
-		//Nếu điểm lớn hơn 0 thì thắng, ngược lại thua
-		if (scoreSystem.getScore() > 0) {
-			message = "Win";
-		}
-		else {
-			message = "Failed!";
-		}
-		Label *lblFinish = Label::createWithTTF(message, "fonts/Marker Felt.ttf", 200);
-		lblFinish->setColor(Color3B::ORANGE);
-		addChild(lblFinish);
-		lblFinish->setPosition(getContentSize() / 2.0f);
+		this->finishGame();
 	}
 }
 
@@ -194,6 +186,8 @@ bool GameScene::onTouchBegan(cocos2d::Touch* touch, cocos2d::Event* event)
 
 				// cộng thêm điểm nào
 				scoreSystem.increaseScore(10);
+
+				CocosDenshion::SimpleAudioEngine::getInstance()->playEffect("tap.wav");
 			}
 		}
 	}
@@ -243,12 +237,10 @@ void GameScene::initScoreLabel()
 // Khi điểm số thay đổi thì ta cập nhật lại nội dung label
 void GameScene::onScoreChanged(ScoreSystem *scoreSys)
 {
-	// đơn giản là log ra output
-	log("Score: %d", scoreSystem.getScore());
-
 	// cập nhật text trong label
 	// tạo chuỗi từ điểm số
-	std::string sScore = StringUtils::format("%d", scoreSystem.getScore());
+	std::string sScore = StringUtils::format("%d | Highest: %d",
+		scoreSystem.getScore(), MAX(highestScoreOfLastGame, scoreSystem.getScore()));
 	// hàm set string dùng để thay đổi đoạn text trong label
 	lbScore->setString(sScore);
 }
@@ -289,4 +281,28 @@ void GameScene::spawnClock(float dt) {
 	Sequence *sequence = Sequence::create(moveAndFadeAction, callfunc, nullptr);
 	// thực thi sequence
 	clock->runAction(sequence);
+}
+
+void GameScene::finishGame()
+{
+	//nghỉ chạy update
+	unscheduleUpdate();
+
+	std::string message = "";
+	//Nếu điểm lớn hơn 0 thì thắng, ngược lại thua
+	if (scoreSystem.getScore() > 0) {
+		message = "Win";
+	}
+	else {
+		message = "Failed!";
+	}
+	Label *lblFinish = Label::createWithTTF(message, "fonts/Marker Felt.ttf", 200);
+	lblFinish->setColor(Color3B::ORANGE);
+	addChild(lblFinish);
+	lblFinish->setPosition(getContentSize() / 2.0f);
+
+	if (highestScoreOfLastGame < scoreSystem.getScore())
+	{
+		UserDefault::getInstance()->setIntegerForKey("HighestScore", scoreSystem.getScore());
+	}
 }

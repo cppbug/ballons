@@ -23,10 +23,6 @@ void ScoreSystem::increaseScore(int dscore)
 void ScoreSystem::decreaseScore(int dscore)
 {
 	score -= dscore;
-	if (score < 0)
-	{
-		score = 0;
-	}
 
 	// gọi hàm thông báo
 	if (OnScoreChanged)
